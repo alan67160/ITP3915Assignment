@@ -9,10 +9,7 @@ if not (current_ver == newest_ver):
     urllib.request.urlretrieve("https://github.com/alan67160/ITP3915Assignment/archive/refs/heads/master.zip", working_directory + "/update.zip")
     with zipfile.ZipFile(working_directory + "/update.zip", 'r') as update_zip:
         update_zip.extractall(working_directory + "/tmp")
-    os.remove(working_directory + "/update.zip")
     for file in os.listdir(working_directory + "/tmp/ITP3915Assignment-master"):
-        try:
-            shutil.move(os.path.join(working_directory + "/tmp/ITP3915Assignment-master", file), os.path.join(working_directory, file))
-        except shutil.Error:
-            pass
+        shutil.move(os.path.join(working_directory + "/tmp/ITP3915Assignment-master", file), os.path.join(working_directory, file))
     shutil.rmtree(working_directory + "/tmp")
+    print("update completed")
