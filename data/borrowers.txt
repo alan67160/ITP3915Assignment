@@ -1,0 +1,9 @@
+# A list containing all the borrowers allowed to borrow items in this system
+# Comments and empty lines are ignored
+# Format:
+# Username
+# Example:
+# alan67160
+Kelvin Yip
+Cow Leung
+alan
