@@ -11,6 +11,17 @@ update_url = "https://raw.githubusercontent.com/alan67160/ITP3915Assignment/mast
 repository_url = "https://github.com/alan67160/ITP3915Assignment"
 config = ConfigParser()
 config.read(working_directory + 'config.ini')
+try:
+    debug = bool(config.get("settings", "debug"))
+except:
+    debug = False
+
+def dprint(msg, *type):
+    type = str(type).lower() ; color = ""
+    if type == "ok": color = "\033[92m"
+    if type == "warn": color = "\033[92m"
+    if type == "fail": color = "\033[92m"
+    if debug: print(f"{color}[DEBUG] {msg}\033[0m")
 
 # update
 def update():
@@ -36,7 +47,7 @@ def update():
             else:
                 print("update skipped!")
     except:
-        print("[WARN]An unexpected error occurred while trying to check the update.\nPlease contact the developer!")
+        print("\033[93m[WARN] An unexpected error occurred while trying to check the update.\nPlease contact the developer!")
 
 def checkpython3():
     try:
