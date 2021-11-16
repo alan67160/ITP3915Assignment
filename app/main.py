@@ -6,6 +6,7 @@ except ImportError:
     # Legacy ConfigParser support
     from ConfigParser import ConfigParser
 INDEX_USER_NO = 0
+INDEX_ITEM_NO = 1
 INDEX_USER_NAME = 1
 INDEX_ITEM_NAME = 0
 INDEX_USER_BORROW_RECORD = 0
@@ -103,9 +104,45 @@ def items_borrow(borrower_name, item_no, item_quantity):
     user_no = int(user_list_by_name.get(str(borrower_name)))
     # ---Writing item data(txt) - Start---
     if (config.get("storage", "item") == "txt"):
+        for borrowed in get_borrowed_list():
+            data = borrowed.split(", ")
+            print(int(data[INDEX_USER_NO]))
+            print(int(data[INDEX_ITEM_NO]))
+            if (int(data[INDEX_USER_NO]) == user_no) and (int(data[INDEX_ITEM_NO]) == item_no):
+                file = open(working_directory + "/data/borrowed.txt", "r")
+                file_date = file.read()
+                file_date = file_date.replace(f"{data[0]}, {data[1]}, {data[2]}", f"{data[0]}, {data[1]}, {int(data[2]) + item_quantity}")
+                file = open(working_directory + "/data/borrowed.txt", "w")
+                file.write(file_date)
+                file.close()
+                return True
         file = open(working_directory + "/data/borrowed.txt", "a")
         file.write(str(f"\n{user_no}, {item_no}, {item_quantity}"))
         file.close()
+    # ---Writing item data(txt) - End---
+
+def items_return(borrower_name, item_no, item_quantity):
+    user_no = int(user_list_by_name.get(str(borrower_name)))
+    # ---Writing item data(txt) - Start---
+    if (config.get("storage", "item") == "txt"):
+        for borrowed in get_borrowed_list():
+            data = borrowed.split(", ")
+            if (int(data[INDEX_USER_NO]) == user_no) and (int(data[INDEX_ITEM_NO]) == item_no):
+                if ((int(data[2]) - item_quantity) > 0):
+                    file = open(working_directory + "/data/borrowed.txt", "r")
+                    file_date = file.read()
+                    file_date = file_date.replace(f"{data[0]}, {data[1]}, {data[2]}", f"{data[0]}, {data[1]}, {int(data[2]) - item_quantity}")
+                    file = open(working_directory + "/data/borrowed.txt", "w")
+                    file.write(file_date)
+                    file.close()
+                else:
+                    file = open(working_directory + "/data/borrowed.txt", "w")
+                    for i in open(working_directory + "/data/borrowed.txt", "r").readline():
+                        if i.strip("\n") != f"{data[0]}, {data[1]}, {item_quantity}":
+                            file.write(i)
+                    file.close()
+                return True
+
     # ---Writing item data(txt) - End---
 
 def main():
@@ -131,6 +168,7 @@ def main():
         raw_ITEMS = raw_ITEMS.split("\n")
         for runtime in range(len(raw_ITEMS)):
             sub_ITEMS += tuple(raw_ITEMS[runtime].split(", "))
+            # for 3 data in one list
             if (len(sub_ITEMS) == 3):
                 ITEMS.append(tuple(sub_ITEMS))
                 sub_ITEMS = ()
@@ -160,7 +198,13 @@ def main():
         # When user input 1 to return item
         elif input_function == FUNCTION_RETURN_ITEM:
             # your logics for user selected return item function here
-            pass
+            print("")
+            ask_borrow_user = input(f"Please input borrower's name, Enter to return: ").lower()
+            display_borrowed(ask_borrow_user)
+            ask_borrow_item = int(input(f"Please input the item no. to borrow (0 - {len(ITEMS)-1}, Enter to return): "))
+            ask_borrow_quantity = int(input(f"Please input the quantity to borrow, Enter to return: "))
+            items_return(ask_borrow_user, ask_borrow_item, ask_borrow_quantity)
+            display_borrowed(ask_borrow_user)
 
         # When user input 2 to display a particular borrower's record
         elif input_function == DISPLAY_USER_RECORDS:
