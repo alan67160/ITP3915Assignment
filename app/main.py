@@ -18,10 +18,20 @@ working_directory = os.path.dirname(os.path.abspath(os.path.dirname(os.path.absp
 # Initialize config
 config = ConfigParser()
 config.read(working_directory + '/config.ini')
-
+try:
+    debug = bool(config.get("settings", "debug"))
+except:
+    debug = False
 # you may implement other necessary functions here
 # def checkWindows():
 #     return (("win" in sys.platform.lower()) or ("windows" in sys.platform.lower()))
+
+def dprint(msg, *type):
+    type = str(type).lower() ; color = ""
+    if type == "ok": color = "\033[92m"
+    if type == "warn": color = "\033[92m"
+    if type == "fail": color = "\033[92m"
+    if debug: print(f"{color}[DEBUG] {msg}\033[0m")
 
 def display():
     print("Invnentory Management System")
@@ -138,7 +148,7 @@ def items_return(borrower_name, item_no, item_quantity):
                 else:
                     file = open(working_directory + "/data/borrowed.txt", "w")
                     for i in open(working_directory + "/data/borrowed.txt", "r").readline():
-                        if i.strip("\n") != f"{data[0]}, {data[1]}, {item_quantity}":
+                        if not (i.strip("\n") == f"{data[0]}, {data[1]}, {item_quantity}"):
                             file.write(i)
                     file.close()
                 return True
@@ -152,27 +162,40 @@ def main():
     # Assign variables
     user_list = dict() ; user_list_by_name = dict() ;  user_borrow_record = dict() ; ITEMS = tuple()
     # ---Loading user data(txt) - Start---
+    dprint("setting up user list...")
     if (config.get("storage", "user") == "txt"):
+        dprint("TXT mode")
         sub_user_list = list()
+        dprint(f"Loading {working_directory}/data/borrowers.txt")
         for user in open(working_directory + "/data/borrowers.txt", "r"):
             if not (user.startswith("# ") or (user == "\n")): sub_user_list.append(user.rstrip("\n").split(", "))
+        dprint("user list:")
+        dprint(f"No. | Username")
         for runtime in range(len(sub_user_list)):
+            dprint(f"{runtime:<3} | {str(sub_user_list[runtime][0]).lower()}")
             user_list[runtime] = str(sub_user_list[runtime][0]).lower()
             user_list_by_name[str(sub_user_list[runtime][0]).lower()] = runtime
+        dprint("User list Loaded!", "ok")
     # ---Loading user data(txt) - End---
     # ---Loading item data(txt) - Start---
+    dprint("setting up base item list...")
     if (config.get("storage", "item") == "txt"):
+        dprint("TXT mode")
         raw_ITEMS = str() ; sub_ITEMS = tuple() ; ITEMS = list()
+        dprint(f"Loading {working_directory}/data/items.txt")
         for read in open(working_directory + "/data/items.txt", "r"):
             if not (read.startswith("# ") or (read == "\n")): raw_ITEMS += read
         raw_ITEMS = raw_ITEMS.split("\n")
+        dprint(f"ItemName                                   | ItemBrand       | ItemQuantity")
         for runtime in range(len(raw_ITEMS)):
             sub_ITEMS += tuple(raw_ITEMS[runtime].split(", "))
             # for 3 data in one list
             if (len(sub_ITEMS) == 3):
+                dprint(f"{sub_ITEMS[0]:<42} | {sub_ITEMS[1]:<15} | {sub_ITEMS[2]}")
                 ITEMS.append(tuple(sub_ITEMS))
                 sub_ITEMS = ()
         ITEMS = tuple(ITEMS)
+        dprint("Base item list Loaded!", "ok")
     # ---Loading item data(txt) - End---
     # ---Initialize - End---
     print("Welcome to Invnentory Management System.")
@@ -200,18 +223,23 @@ def main():
             # your logics for user selected return item function here
             print("")
             ask_borrow_user = input(f"Please input borrower's name, Enter to return: ").lower()
+            dprint(f"calling display_borrowed\nask_borrow_user = {ask_borrow_user}")
             display_borrowed(ask_borrow_user)
             ask_borrow_item = int(input(f"Please input the item no. to borrow (0 - {len(ITEMS)-1}, Enter to return): "))
             ask_borrow_quantity = int(input(f"Please input the quantity to borrow, Enter to return: "))
+            dprint(f"calling items_return\nask_borrow_user = {ask_borrow_user}\nask_borrow_item = {ask_borrow_item}\nask_borrow_quantity = {ask_borrow_quantity}")
             items_return(ask_borrow_user, ask_borrow_item, ask_borrow_quantity)
+            dprint(f"calling display_borrowed\nask_borrow_user = {ask_borrow_user}")
             display_borrowed(ask_borrow_user)
 
         # When user input 2 to display a particular borrower's record
         elif input_function == DISPLAY_USER_RECORDS:
             # your logics for user selected display borrower's record here
+            dprint(f"calling display_borrowed with following giving username")
             display_borrowed(input(f"Please input borrower's name, Enter to return: ").lower())
 
         # When user input 3 to display all records
         elif input_function == DISPLAY_ALL_RECORDS:
             # your logics for user selected display all records here
+            dprint(f"calling display_borrowed")
             display_borrowed()
