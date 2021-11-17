@@ -19,7 +19,8 @@ working_directory = os.path.dirname(os.path.abspath(os.path.dirname(os.path.absp
 config = ConfigParser()
 config.read(working_directory + '/config.ini')
 try:
-    debug = bool(config.get("settings", "debug"))
+    if (config.get("settings", "debug").lower() == "true"): debug = True
+    else: debug = False
 except:
     debug = False
 # you may implement other necessary functions here
@@ -29,18 +30,24 @@ except:
 def dprint(msg, *type):
     type = str(type).lower() ; color = ""
     if type == "ok": color = "\033[92m"
-    if type == "warn": color = "\033[92m"
-    if type == "fail": color = "\033[92m"
+    if type == "warn": color = "\033[93m"
+    if type == "fail": color = "\033[91m"
     if debug: print(f"{color}[DEBUG] {msg}\033[0m")
 
+def ask(a, check_type, **arg):
+    if check_type == "select_function":
+
+
 def display():
-    print("Invnentory Management System")
-    print(f"No. ")
+    print("Inventory Management System Menu:")
+    print(f"No. | Function")
     display_function_list = ("Borrow Item", "Return Item", "Display User Records", "Display All Records")
     for runtime in range(len(display_function_list)):
         print(f"{runtime:<3} | {display_function_list[runtime]}")
+    selected_function = int()
     try:
-        return int(input(f"Please input your choice. (0-{len(display_function_list)-1}, Enter to return) : "))
+        selected_function = int(input(f"Please input your choice. (0-{len(display_function_list)-1}, Enter to return) : "))
+        return
     except:
         print("error")
         display()
@@ -84,11 +91,19 @@ def get_borrowed_quantity(item_no, *user_no):
     return borrowed_quantity
 
 def get_borrowed_list():
+    dprint("Loading borrow record")
     # ---Loading item data(txt) - Start---
     if (config.get("storage", "borrowed") == "txt"):
+        dprint("TXT mode")
         raw_borrowed = str()
         for read in open(working_directory + "/data/borrowed.txt", "r"):
             if not (read.startswith("# ") or (read == "\n")): raw_borrowed += read
+        if debug:
+            dprint(f"Item No. | Item Name                                  | borrower   | Qty. borrowed")
+            for record in raw_borrowed.split("\n"):
+                data = record.split(", ")
+                name = str(ITEMS[int(data[1])][0] + " - " + ITEMS[int(data[1])][1])
+                dprint(f"{data[1]:>7}. | {name:<42} | {user_list[int(data[0])]:<10} | {data[2]:>13}")
         return raw_borrowed.split("\n")
     # ---Loading item data(txt) - End---
 
@@ -112,33 +127,39 @@ def items_borrowed(borrower_no):
 
 def items_borrow(borrower_name, item_no, item_quantity):
     user_no = int(user_list_by_name.get(str(borrower_name)))
+    dprint("Loading items_borrow function")
     # ---Writing item data(txt) - Start---
     if (config.get("storage", "item") == "txt"):
+        dprint("TXT mode")
         for borrowed in get_borrowed_list():
             data = borrowed.split(", ")
-            print(int(data[INDEX_USER_NO]))
-            print(int(data[INDEX_ITEM_NO]))
             if (int(data[INDEX_USER_NO]) == user_no) and (int(data[INDEX_ITEM_NO]) == item_no):
+                dprint("replace mode")
                 file = open(working_directory + "/data/borrowed.txt", "r")
                 file_date = file.read()
-                file_date = file_date.replace(f"{data[0]}, {data[1]}, {data[2]}", f"{data[0]}, {data[1]}, {int(data[2]) + item_quantity}")
+                file_date = file_date.replace(f"{data[0]}, {data[1]}, {data[2]}", f"{data[0]}, {data[1]}, {int(data[2]) - item_quantity}")
                 file = open(working_directory + "/data/borrowed.txt", "w")
                 file.write(file_date)
                 file.close()
                 return True
+        dprint("writing mode")
         file = open(working_directory + "/data/borrowed.txt", "a")
         file.write(str(f"\n{user_no}, {item_no}, {item_quantity}"))
         file.close()
+        return True
     # ---Writing item data(txt) - End---
 
 def items_return(borrower_name, item_no, item_quantity):
     user_no = int(user_list_by_name.get(str(borrower_name)))
+    dprint("Loading items_return function")
     # ---Writing item data(txt) - Start---
     if (config.get("storage", "item") == "txt"):
+        dprint("TXT mode")
         for borrowed in get_borrowed_list():
             data = borrowed.split(", ")
             if (int(data[INDEX_USER_NO]) == user_no) and (int(data[INDEX_ITEM_NO]) == item_no):
                 if ((int(data[2]) - item_quantity) > 0):
+                    dprint("replace mode")
                     file = open(working_directory + "/data/borrowed.txt", "r")
                     file_date = file.read()
                     file_date = file_date.replace(f"{data[0]}, {data[1]}, {data[2]}", f"{data[0]}, {data[1]}, {int(data[2]) - item_quantity}")
@@ -146,23 +167,27 @@ def items_return(borrower_name, item_no, item_quantity):
                     file.write(file_date)
                     file.close()
                 else:
-                    file = open(working_directory + "/data/borrowed.txt", "w")
-                    for i in open(working_directory + "/data/borrowed.txt", "r").readline():
-                        if not (i.strip("\n") == f"{data[0]}, {data[1]}, {item_quantity}"):
-                            file.write(i)
-                    file.close()
+                    dprint("remove mode")
+                    with open(working_directory + "/data/temp.txt", "w") as file_write:
+                        for i in open(working_directory + "/data/borrowed.txt", "r"):
+                            if not i.strip("\n").startswith(f"{data[0]}, {data[1]}, {data[2]}"):
+                                dprint(f"data: {i}")
+                                file_write.write(i)
+                        file_write.close()
+                    os.replace(working_directory + "/data/temp.txt", working_directory + "/data/borrowed.txt")
+                dprint("items_return function run successfully")
                 return True
-
     # ---Writing item data(txt) - End---
 
 def main():
-    # ---Initialize - Start---
+    dprint("System initializing...")
     # Assign global variables
+    dprint("initializing global variables...")
     global user_list, user_list_by_name, user_borrow_record, ITEMS
     # Assign variables
+    dprint("initializing variables...")
     user_list = dict() ; user_list_by_name = dict() ;  user_borrow_record = dict() ; ITEMS = tuple()
-    # ---Loading user data(txt) - Start---
-    dprint("setting up user list...")
+    dprint("initializing user list...")
     if (config.get("storage", "user") == "txt"):
         dprint("TXT mode")
         sub_user_list = list()
@@ -176,29 +201,29 @@ def main():
             user_list[runtime] = str(sub_user_list[runtime][0]).lower()
             user_list_by_name[str(sub_user_list[runtime][0]).lower()] = runtime
         dprint("User list Loaded!", "ok")
-    # ---Loading user data(txt) - End---
-    # ---Loading item data(txt) - Start---
+    try: user_list
+    except NameError: dprint("\033[91m[WARN] An unexpected error occurred while trying to initialize the user list...")
     dprint("setting up base item list...")
-    if (config.get("storage", "item") == "txt"):
+    if config.get("storage", "item") == "txt":
         dprint("TXT mode")
-        raw_ITEMS = str() ; sub_ITEMS = tuple() ; ITEMS = list()
+        raw_items = str()
+        sub_items = tuple()
+        ITEMS = list()
         dprint(f"Loading {working_directory}/data/items.txt")
         for read in open(working_directory + "/data/items.txt", "r"):
-            if not (read.startswith("# ") or (read == "\n")): raw_ITEMS += read
-        raw_ITEMS = raw_ITEMS.split("\n")
+            if not (read.startswith("# ") or (read == "\n")): raw_items += read
+        raw_items = raw_items.split("\n")
         dprint(f"ItemName                                   | ItemBrand       | ItemQuantity")
-        for runtime in range(len(raw_ITEMS)):
-            sub_ITEMS += tuple(raw_ITEMS[runtime].split(", "))
-            # for 3 data in one list
-            if (len(sub_ITEMS) == 3):
-                dprint(f"{sub_ITEMS[0]:<42} | {sub_ITEMS[1]:<15} | {sub_ITEMS[2]}")
-                ITEMS.append(tuple(sub_ITEMS))
-                sub_ITEMS = ()
+        for runtime in range(len(raw_items)):
+            sub_items += tuple(raw_items[runtime].split(", "))
+            if (len(sub_items) == 3):
+                dprint(f"{sub_items[0]:<42} | {sub_items[1]:<15} | {sub_items[2]}")
+                ITEMS.append(tuple(sub_items))
+                sub_items = ()
         ITEMS = tuple(ITEMS)
         dprint("Base item list Loaded!", "ok")
-    # ---Loading item data(txt) - End---
-    # ---Initialize - End---
-    print("Welcome to Invnentory Management System.")
+    dprint("System Started")
+    print("Welcome to Inventory Management System.")
     while True:
         # display inventory management system menu and ask for user input
         input_function = display()

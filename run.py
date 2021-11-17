@@ -1,5 +1,9 @@
 #!/usr/bin/env python
-import urllib.request, os, zipfile, shutil, sys
+import urllib.request
+import os
+import zipfile
+import shutil
+import sys
 try:
     from configparser import ConfigParser
 except ImportError:
@@ -17,11 +21,17 @@ except:
     debug = False
 
 def dprint(msg, *type):
-    type = str(type).lower() ; color = ""
-    if type == "ok": color = "\033[92m"
-    if type == "warn": color = "\033[92m"
-    if type == "fail": color = "\033[92m"
-    if debug: print(f"{color}[DEBUG] {msg}\033[0m")
+    if debug:
+        type = str(type).lower()
+        if type == "ok":
+            color = "\033[92m"
+        elif type == "warn":
+            color = "\033[92m"
+        elif type == "fail":
+            color = "\033[92m"
+        else:
+            color = ""
+        print(f"{color}[DEBUG] {msg}\033[0m")
 
 # update
 def update():
