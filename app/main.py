@@ -31,50 +31,54 @@ else:
 #     return (("win" in sys.platform.lower()) or ("windows" in sys.platform.lower()))
 
 
-def dprint(msg, *debug_type):
-    if debug:
-        debug_type = str(debug_type).lower()
-        if debug_type == "ok":
-            color = "\033[92m"
-        elif debug_type == "warn":
-            color = "\033[93m"
-        elif debug_type == "fail":
-            color = "\033[91m"
-        else:
-            color = "\033[92m"
-        print(f"{color}[金寶綠水]\033[0m {msg}")
+def dprint(msg, *debug_type):  # creating a function call "dprint", and it will accept 2 parameter
+    # msg is required, the message that I will print
+    # debug_type is optional, the message type for set the prefix color
+    if debug:  # checking if the debug is on
+        debug_type = str(debug_type).lower()  # set the debug_type to lower case to reduce case unwatch issues
+        if debug_type == "ok":  # checking if the debug_type is "ok" or not
+            color = "\033[92m"  # set color green
+        elif debug_type == "warn":  # checking if the debug_type is "warn" or not
+            color = "\033[93m"  # set color yellow
+        elif debug_type == "fail":  # checking if the debug_type is "fail" or not
+            color = "\033[91m"  # set color red
+        else:  # run if the debug_type is unset
+            color = "\033[92m"  # set color green
+        print(f"{color}[金寶綠水]\033[0m {msg}")  # print debug message with prefix
 
 
 def ask(ask_msg, ask_type, arg, empty_result_action):
+    dprint("ask function - asking")
     result = input(ask_msg)
     if empty_result_action == "retry":
         empty_result_action = "ask(ask_msg, ask_type, arg, empty_result_action)"
+    dprint("ask function - check empty")
     if (result == "") and not (empty_result_action == "ignore"):
         print("The input can't be empty")
         exec(empty_result_action)
+    dprint("ask function - check user input")
     if ask_type == "select_function":
         try:
             result = int(result)
-            if (result < 0) or (result > len(arg)):
+            if (result < 0) or (result > len(arg)):  # user input are less then 0 or more then the function list
                 print("Invalid input for choice")
                 ask(ask_msg, ask_type, arg, empty_result_action)
-        except ValueError:
+        except ValueError:  # user input are not integer
             print("Invalid input for choice")
             ask(ask_msg, ask_type, arg, empty_result_action)
     if ask_type == "username":
         try:
-            result = str(result)
-            is_a_user = False
-            for no, username in user_list.items():
-                if username == result:
-                    is_a_user = True
-                    break
-            if not is_a_user:
-                print("Not a valid username.")
-                ask(ask_msg, ask_type, arg, empty_result_action)
-        except ValueError:
-            print("Invalid value for quantity")
-            ask(ask_msg, ask_type, arg, empty_result_action)
+            is_a_user = False  # initializing the is_a_user variable
+            for no, username in user_list.items():  # Load user list
+                if username == result:  # Check the input have a match on user list or not
+                    is_a_user = True  # if have a match set is_a_user to true
+                    break  # stop the for loop
+            if not is_a_user:  # user input are a valid user on user list
+                print("Not a valid username.")  # print error to user
+                ask(ask_msg, ask_type, arg, empty_result_action)  # ask again
+        except ValueError:  # user input are not string
+            print("Invalid value for quantity")  # print error to user
+            ask(ask_msg, ask_type, arg, empty_result_action)  # ask again
     if ask_type == "borrow_item_no":
         try:
             result = int(result)
@@ -87,7 +91,7 @@ def ask(ask_msg, ask_type, arg, empty_result_action):
     if ask_type == "return_item_no":
         try:
             result = int(result)
-            if (result < 0) or (result > len(ITEMS)):
+            if (result < 0) or (result > len(ITEMS)):  # user input are less then 0 or more then the item type list
                 print("The selected item is currently out of stock.")
                 ask(ask_msg, ask_type, arg, empty_result_action)
         except ValueError:
@@ -96,8 +100,11 @@ def ask(ask_msg, ask_type, arg, empty_result_action):
     if ask_type == "borrow_quantity":
         try:
             result = int(result)
-            if (result < 1) or (remaining_quantity(int(arg)) < result):
+            if remaining_quantity(int(arg)) < result:
                 print("Your requested quantity is over our stock.")
+                ask(ask_msg, ask_type, arg, empty_result_action)
+            if result < 1:
+                print("Your can't borrow less then 1 item")
                 ask(ask_msg, ask_type, arg, empty_result_action)
         except ValueError:
             print("Invalid value for quantity")
@@ -110,9 +117,12 @@ def ask(ask_msg, ask_type, arg, empty_result_action):
             for i in items_borrowed(int(user_no)):
                 if int(i[1]) == int(arg[1]):
                     mq += int(i[2])
-            print(mq)
-            if (result < 1) or (mq > result):
+            dprint(mq)
+            if mq < result:
                 print("Your return quantity is over our stock.")
+                ask(ask_msg, ask_type, arg, empty_result_action)
+            if result > 1:
+                print("You can't return less then 1 item.")
                 ask(ask_msg, ask_type, arg, empty_result_action)
         except ValueError:
             print("Invalid value for quantity")
@@ -154,8 +164,9 @@ def display_borrowed(user_name=""):
 # a function remaining_quantity which accepts one parameter(UniqueItemNo)
 def remaining_quantity(item_no):
     dprint("remaining_quantity function")
-    dprint(f"base = {tuple(ITEMS[item_no])[2]}")
-    dprint(f"borrowed = {get_borrowed_quantity(item_no)}")
+    dprint(f"base_quantity = {tuple(ITEMS[item_no])[2]}")
+    dprint(f"borrowed_quantity = {get_borrowed_quantity(item_no)}")
+    dprint(f"remaining_quantity = {int(tuple(ITEMS[item_no])[2]) - int(get_borrowed_quantity(item_no))}")
     return int(tuple(ITEMS[item_no])[2]) - int(get_borrowed_quantity(item_no))
 
 
@@ -185,14 +196,14 @@ def get_borrowed_list():
                 raw_borrowed += read
         if debug:
             dprint(f"Item No. | Item Name                                  | borrower   | Qty. borrowed")
-            for record in raw_borrowed.split("\n"):
+            for record in tuple(filter(None, raw_borrowed.split("\n"))):
                 data = record.split(", ")
                 dprint(f"data[1] = {data}")
                 dprint(f"ITEMS[data[1]][0] = {ITEMS[int(data[1])][0]}")
                 dprint(f"ITEMS[data[1]][1] = {ITEMS[int(data[1])][1]}")
                 name = f"{ITEMS[int(data[1])][0]} - {ITEMS[int(data[1])][1]}"
                 dprint(f"{data[1]:>7}. | {name:<42} | {user_list[int(data[0])]:<10} | {data[2]:>13}")
-        raw_borrowed = filter(None, raw_borrowed.split("\n"))
+        raw_borrowed = tuple(filter(None, raw_borrowed.split("\n")))
         dprint(f"raw_borrowed = {raw_borrowed}")
         return raw_borrowed
     # ---Loading item data(txt) - End---
