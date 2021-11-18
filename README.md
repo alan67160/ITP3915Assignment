@@ -1,4 +1,4 @@
-# ITP3915Assignment
+# ITP3915 - Programming Fundamentals Assignment
 A inventory management system
 
 [Download](https://github.com/alan67160/ITP3915Assignment)
@@ -36,13 +36,14 @@ A inventory management system
 | :--: | --------------- | --------- | --------------- | ------ |
 | 01 | Main menu | In the inventory management main menu, input `4` or `-1` | An error message "Invalid input for choice" should be displayed and will ask the user to input function number again | Pass / ~~Fail~~ |
 |  |  | In the inventory management main menu, input `a` | An error message "Invalid input for choice" should be displayed and will ask the user to input function number again | Pass / ~~Fail~~ |
-| 02 | Return item - item no | In the inventory management return item no, input `99` or `-99` | An error message "You input is over our item(s) list." should be displayed and will ask the user to input function number again | Pass / ~~Fail~~ |
+| 02 | Return item - item no | In the inventory management return item no, input `99` or `-99` | An error message "you can't select a non-exist item" should be displayed and will ask the user to input function number again | Pass / ~~Fail~~ |
 |  |  | In the inventory management return item no, input `b` | An error message "Invalid value for item no." should be displayed and will ask the user to input function number again | Pass / ~~Fail~~ |
 | 03 | Return item - quantity | In the inventory management return quantity, input `0` or `-99` | An error message "You can't return less then 1 item." should be displayed and will ask the user to input function number again | Pass / ~~Fail~~ |
 |  |  | In the inventory management return quantity, input `b` | An error message "Invalid value for item no." should be displayed and will ask the user to input function number again | Pass / ~~Fail~~ |
 |  |  | In the inventory management return quantity, input `4`, but the user only borrowed `3` | An error message "Your return quantity is over your borrow record." should be displayed and will ask the user to input function number again | Pass / ~~Fail~~ |
 | 04 | borrow item - item no | In the inventory management borrow item no, input `99` or `-99` | An error message "you can't select a non-exist item" should be displayed and will ask the user to input function number again | Pass / ~~Fail~~ |
 |  |  | In the inventory management borrow item no, input `b` | An error message "Invalid value for item no." should be displayed and will ask the user to input function number again | Pass / ~~Fail~~ |
+|  |  | In the inventory management borrow item no, input `1`, but item `1` is out of stock  | An error message "The selected item is currently out of stock." should be displayed and will ask the user to input function number again | Pass / ~~Fail~~ |
 | 05 |  |  |  | Pass / ~~Fail~~ |
 | 06 |  |  |  | Pass / ~~Fail~~ |
 | 07 |  |  |  | Pass / ~~Fail~~ |
