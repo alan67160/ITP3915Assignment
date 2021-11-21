@@ -7,4 +7,4 @@ MacBook Pro, Apple, 2
 AC1200 Wireless Adapter, ALFA Network, 4
 Jetson Nano Developer Kit, NVIDIA, 3
 WRT1900AC Dual-Band Wi-Fi Router, Linksys, 2
-RoboMaster EP', DJI, 22, 0, 1wwwww2, 0, 1
+RoboMaster EP, DJI, 2
