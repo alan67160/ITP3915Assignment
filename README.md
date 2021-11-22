@@ -11,7 +11,7 @@ A inventory management system
     - [x] Display item(s) borrowed by particular user
     - [x] Display all records
   - [x] ask for select functions
-- [ ] Only 5 item(s) are allowed to borrow or return in this system
+- [x] Only 5 item(s) are allowed to borrow or return in this system
 - [x] To borrow an item, user is required to input the item number to borrow, the number of quantity to borrow (given that the quantity left satisfy user's request), and the borrower's name
   - [x] show `item list` with `remaining quantity`
   - [x] ask `item no`
