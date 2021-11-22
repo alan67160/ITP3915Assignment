@@ -1,145 +1,146 @@
-# initialize / Environment variables
+# inport
 import os
-try:
-    from configparser import ConfigParser
-except ImportError:
-    # Legacy ConfigParser support
-    from ConfigParser import ConfigParser
-INDEX_USER_NO = 0
-INDEX_ITEM_NO = 1
-INDEX_USER_NAME = 1
-INDEX_ITEM_NAME = 0
-INDEX_USER_BORROW_RECORD = 0
-FUNCTION_BORROW_ITEM = 0
-FUNCTION_RETURN_ITEM = 1
-DISPLAY_USER_RECORDS = 2
-DISPLAY_ALL_RECORDS = 3
-display_function_list = ("Borrow Item", "Return Item", "Display User Records", "Display All Records")
-# Initialize config
-config = ConfigParser()
-working_directory = os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(__file__))))
-config.read(working_directory + '/config.ini')
-if config.get("settings", "debug").lower() == "true":
-    debug = True
-else:
-    debug = False
+from enum import Enum
+from .util import dprint
+from .config import Config
+from .environment_variable import Variable as ev
 
 
 # you may implement other necessary functions here
+class ask:
+    class check_type(Enum):
+        select_function = "select_function"
+        username = "username"
+        return_username = "return_username"
+        borrow_item_no = "borrow_item_no"
+        return_item_no = "return_item_no"
+        borrow_quantity = "borrow_quantity"
+        return_quantity = "return_quantity"
 
-
-def dprint(msg, debug_type="info"):  # creating a function call "dprint", and it will accept 2 parameter
-    # msg is required, the message that I will print
-    # debug_type is optional, the message type for set the message color
-    if debug:  # checking if the debug is on
-        color = ""
-        debug_type = str(debug_type).lower()  # set the debug_type to lower case to reduce case unwatch issues
-        if debug_type == "info":  # checking if the debug_type is "info" or not
-            color = "\033[34m"  # set color red
-        if debug_type == "data":  # checking if the debug_type is "data" or not
-            color = "\033[94m"  # set color red
-        elif debug_type == "ok":  # checking if the debug_type is "ok" or not
-            color = "\033[92m"  # set color green
-        elif debug_type == "warn":  # checking if the debug_type is "warn" or not
-            color = "\033[93m"  # set color yellow
-        elif debug_type == "fail":  # checking if the debug_type is "fail" or not
-            color = "\033[91m"  # set color red
-        print(f"\033[92m[金寶綠水]\033[0m {color}{msg}\033[0m")  # print debug message with prefix
-
-
-def ask(ask_msg, ask_type, arg, empty_result_action):
-    dprint("ask function - asking")
-    result = input(ask_msg)
-    if empty_result_action == "retry":
-        empty_result_action = "ask(ask_msg, ask_type, arg, empty_result_action)"
-    dprint("ask function - check empty")
-    if (result == "") and not (empty_result_action == "ignore"):
-        print("The input can't be empty")
-        exec(empty_result_action)
-    dprint("ask function - check user input")
-    if ask_type == "select_function":
-        try:
-            result = int(result)
-            if (result < 0) or (result > len(arg)):  # user input are less then 0 or more then the function list
-                print("Invalid input for choice")
-                ask(ask_msg, ask_type, arg, empty_result_action)
-        except ValueError:  # user input are not integer
-            print("Invalid input for choice")
-            ask(ask_msg, ask_type, arg, empty_result_action)
-    if ask_type == "username":
-        try:
-            is_a_user = False  # initializing the is_a_user variable
-            for no, username in user_list.items():  # Load user list
-                if username == result:  # Check the input have a match on user list or not
-                    is_a_user = True  # if have a match set is_a_user to true
-                    break  # stop the for loop
-            if not is_a_user:  # user input are a valid user on user list
-                print("Not a valid username.")  # print error to user
-                ask(ask_msg, ask_type, arg, empty_result_action)  # ask again
-        except ValueError:  # user input are not string
-            print("Invalid value for quantity")  # print error to user
-            ask(ask_msg, ask_type, arg, empty_result_action)  # ask again
-    if ask_type == "borrow_item_no":
-        try:
-            result = int(result)
-            if remaining_quantity(result) < 0:
-                print("The selected item is currently out of stock.")
-                ask(ask_msg, ask_type, arg, empty_result_action)
-            if (result < 0) or (len(ITEMS) < result):
-                print("you can't select a non-exist item")
-                ask(ask_msg, ask_type, arg, empty_result_action)
-        except ValueError:
-            print("Invalid value for item no.")
-            ask(ask_msg, ask_type, arg, empty_result_action)
-    if ask_type == "return_item_no":
-        try:
-            result = int(result)
-            if (result < 0) or (result > len(ITEMS)):  # user input are less then 0 or more then the item type list
-                print("you can't select a non-exist item")
-                ask(ask_msg, ask_type, arg, empty_result_action)
-        except ValueError:
-            print("Invalid value for item no.")
-            ask(ask_msg, ask_type, arg, empty_result_action)
-    if ask_type == "borrow_quantity":
-        try:
-            result = int(result)
-            if remaining_quantity(int(arg)) < result:
-                print("Your requested quantity is over our stock.")
-                ask(ask_msg, ask_type, arg, empty_result_action)
-            if result < 1:
-                print("Your can't borrow less then 1 item")
-                ask(ask_msg, ask_type, arg, empty_result_action)
-        except ValueError:
-            print("Invalid value for quantity")
-            ask(ask_msg, ask_type, arg, empty_result_action)
-    if ask_type == "return_quantity":
-        try:
-            result = int(result)
-            mq = 0
-            user_no = int(user_list_by_name.get(str(arg[0])))
-            for i in items_borrowed(int(user_no)):
-                if int(i[1]) == int(arg[1]):
-                    mq += int(i[2])
-            dprint(mq)
-            if mq < result:
-                dprint("user want to donate item")
-                print("Your return quantity is over your borrow record.")
-                ask(ask_msg, ask_type, arg, empty_result_action)
-            if result > 1:
-                dprint("user want to return nothing or taking our stuff")
-                print("You can't return less then 1 item.")
-                ask(ask_msg, ask_type, arg, empty_result_action)
-        except ValueError:
-            print("Invalid value for quantity")
-            ask(ask_msg, ask_type, arg, empty_result_action)
-    return result
+    def check(self, ask_msg, ask_type, arg, empty_result_action):
+        while True:
+            dprint("ask function - asking")
+            result = input(ask_msg)
+            dprint("ask function - checking empty")
+            if result == "":
+                print("The input can't be empty")
+                if empty_result_action == "retry":
+                    continue
+                if not (empty_result_action == "ignore"):
+                    exec(empty_result_action)
+            dprint("ask function - checking user input")
+            if ask_type == "select_function":
+                try:
+                    result = int(result)
+                    if (result < 0) or (result > len(arg)):  # user input are less then 0 or more then the function list
+                        print("Invalid input for choice")
+                        continue
+                except ValueError:  # user input are not integer
+                    print("Invalid input for choice")
+                    continue
+                break
+            if ask_type == "username":
+                try:
+                    is_a_user = False  # initializing the is_a_user variable
+                    for no, username in user_list.items():  # Load user list
+                        if username == result:  # Check the input have a match on user list or not
+                            is_a_user = True  # if have a match set is_a_user to true
+                            break  # stop the for loop
+                    if not is_a_user:  # user input are a valid user on user list
+                        print("Not a valid username.")  # print error to user
+                        continue  # ask again
+                except ValueError:  # user input are not string
+                    print("Invalid value for quantity")  # print error to user
+                    continue  # ask again
+                break
+            if ask_type == "return_username":
+                try:
+                    is_a_user = False
+                    for no, username in user_list.items():
+                        if username == result:
+                            is_a_user = True
+                            break
+                    if not is_a_user:
+                        print("Not a valid username.")
+                        continue
+                    if not items_borrowed(result):
+                        print(f"{result} did not borrow any items")
+                        continue
+                except ValueError:
+                    print("Invalid value for quantity")
+                    continue
+                break
+            if ask_type == "borrow_item_no":
+                try:
+                    result = int(result)
+                    if remaining_quantity(result) < 0:
+                        print("The selected item is currently out of stock.")
+                        continue
+                    if (result < 0) or (len(ITEMS) < result):
+                        print("you can't select a non-exist item")
+                        continue
+                except ValueError:
+                    print("Invalid value for item no.")
+                    continue
+                break
+            if ask_type == "return_item_no":
+                try:
+                    result = int(result)
+                    if (result < 0) or ((len(ITEMS) - 1) < result):
+                        print("you can't select a non-exist item")
+                        continue
+                    has_borrowed = False
+                    for borrowed in get_borrowed_list():
+                        if (borrowed[0] == arg) and (borrowed[1] == result):
+                            has_borrowed = True
+                    if has_borrowed:
+                        print("you haven't borrowed this item before")
+                except ValueError:
+                    print("Invalid value for item no.")
+                    continue
+                break
+            if ask_type == "borrow_quantity":
+                try:
+                    result = int(result)
+                    if remaining_quantity(int(arg)) < result:
+                        print("Your requested quantity is over our stock.")
+                        continue
+                    if result < 1:
+                        print("Your can't borrow less then 1 item")
+                        continue
+                except ValueError:
+                    print("Invalid value for quantity")
+                    continue
+                break
+            if ask_type == "return_quantity":
+                try:
+                    result = int(result)
+                    mq = 0
+                    user_no = int(user_list_by_name.get(str(arg[0])))
+                    for i in items_borrowed(int(user_no)):
+                        if int(i[1]) == int(arg[1]):
+                            mq += int(i[2])
+                    dprint(mq)
+                    if mq < result:
+                        dprint("user want to donate item")
+                        print("Your return quantity is over your borrow record.")
+                        continue
+                    if result > 1:
+                        dprint("user want to return nothing or taking our stuff")
+                        print("You can't return less then 1 item.")
+                        continue
+                except ValueError:
+                    print("Invalid value for quantity")
+                    continue
+                break
+        return result
 
 
 def display():
     print("Inventory Management System Menu:")
     print(f"No. | Function")
-    for runtime in range(len(display_function_list)):
-        print(f"{runtime:<3} | {display_function_list[runtime]}")
+    for runtime in range(len(ev.function_list.value)):
+        print(f"{runtime:<3} | {ev.function_list.value[runtime]}")
 
 
 def display_borrowed(user_name=""):
@@ -193,14 +194,14 @@ def get_borrowed_quantity(item_no, *user_no):
 def get_borrowed_list():
     dprint("Loading borrow record")
     # ---Loading item data(txt) - Start---
-    if config.get("storage", "borrowed") == "txt":
-        with open(working_directory + "/data/borrowed.txt", "r") as file:
+    if Config.borrowed == "txt":
+        with open(ev.working_directory.value + "/data/borrowed.txt", "r") as file:
             dprint("TXT mode")
             raw_borrowed = str()
             for read in file:
                 if not (read.startswith("# ") or (read == "\n")):
                     raw_borrowed += read
-            if debug:
+            if Config.debug:
                 dprint(f"Item No. | Item Name                                  | borrower   | Qty. borrowed")
                 for record in tuple(filter(None, raw_borrowed.split("\n"))):
                     data = record.split(", ")
@@ -240,23 +241,35 @@ def items_borrowed(borrower_no):
 def items_borrow(borrower_name, item_no, item_quantity):
     user_no = int(user_list_by_name.get(str(borrower_name)))
     dprint("Loading items_borrow function")
+    if Config.borrow_limit == 0:
+        print("I''m sorry, but borrowing functions are currently disabled by the administrator.\n"
+              "Please contact the server administrators if you believe that this is in error.")
+        return False
+    if Config.borrow_limit > 1:
+        borrowed_quantity = 0
+        for i in items_borrowed(user_no):
+            borrowed_quantity += int(i[2])
+        if (borrowed_quantity + item_quantity) > Config.borrow_limit:
+            print("I''m sorry, but you have reached the borrow maximum.\n"
+                  "Please contact the system administrators if you believe that this is in error.")
+        return False
     # ---Writing item data(txt) - Start---
-    if config.get("storage", "item") == "txt":
+    if Config.item == "txt":
         dprint("TXT mode")
         for borrowed in get_borrowed_list():
             data = borrowed.split(", ")
             if (int(data[0]) == user_no) and (int(data[1]) == int(item_no)):
                 dprint("replace mode")
-                with open(working_directory + "/data/borrowed.txt", "r+") as file:
+                with open(ev.working_directory.value + "/data/borrowed.txt", "r+") as file:
                     file_date = file.read()
                     file_date = file_date.replace(f"{data[0]}, {data[1]}, {data[2]}",
                                                   f"{data[0]}, {data[1]}, {int(data[2]) + item_quantity}")
                     file.write(file_date)
                     file.close()
                     return True
-        with open(working_directory + "/data/borrowed.txt", "a") as file:
+        with open(ev.working_directory.value + "/data/borrowed.txt", "a") as file:
             dprint("writing mode")
-            file = open(working_directory + "/data/borrowed.txt", "a")
+            file = open(ev.working_directory.value + "/data/borrowed.txt", "a")
             file.write(str(f"\n{user_no}, {item_no}, {item_quantity}"))
             file.close()
         return True
@@ -267,29 +280,34 @@ def items_borrow(borrower_name, item_no, item_quantity):
 def items_return(borrower_name, item_no, item_quantity):
     user_no = int(user_list_by_name.get(str(borrower_name)))
     dprint("Loading items_return function")
+    if Config.borrow_limit == 0:
+        print("I''m sorry, but borrowing functions are currently disabled by the administrator.\n"
+              "Please contact the server administrators if you believe that this is in error.")
+        return False
     # ---Writing item data(txt) - Start---
-    if config.get("storage", "item") == "txt":
+    if Config.item == "txt":
         dprint("TXT mode")
         for borrowed in get_borrowed_list():
             data = borrowed.split(", ")
-            if (int(data[INDEX_USER_NO]) == user_no) and (int(data[INDEX_ITEM_NO]) == int(item_no)):
+            if (int(data[ev.INDEX_USER_NO.value]) == user_no) and (int(data[ev.INDEX_ITEM_NO.value]) == int(item_no)):
                 if (int(data[2]) - item_quantity) > 0:
                     dprint("replace mode")
-                    file = open(working_directory + "/data/borrowed.txt", "r")
-                    file_date = file.read()
-                    file_date = file_date.replace(f"{data[0]}, {data[1]}, {data[2]}",
-                                                  f"{data[0]}, {data[1]}, {int(data[2]) - item_quantity}")
-                    file = open(working_directory + "/data/borrowed.txt", "w")
-                    file.write(file_date)
-                    file.close()
+                    with open(ev.working_directory.value + "/data/borrowed.txt", "r") as file_read, \
+                            open(ev.working_directory.value + "/data/borrowed.txt", "w") as file_write:
+                        file_date = file_read.read()
+                        file_date = file_date.replace(f"{data[0]}, {data[1]}, {data[2]}",
+                                                      f"{data[0]}, {data[1]}, {int(data[2]) - item_quantity}")
+                        file_write.write(file_date)
+                        file_write.close()
                 else:
                     dprint("remove mode")
-                    with open(working_directory + "/data/temp.txt", "a") as file_write:
-                        for i in open(working_directory + "/data/borrowed.txt", "r"):
+                    with open(ev.working_directory.value + "/data/temp.txt", "a") as file_write:
+                        for i in open(ev.working_directory.value + "/data/borrowed.txt", "r"):
                             if not i.strip("\n").startswith(f"{data[0]}, {data[1]}, {data[2]}"):
                                 dprint(f"data: {i}")
                                 file_write.write(i)
-                    os.replace(working_directory + "/data/temp.txt", working_directory + "/data/borrowed.txt")
+                    os.replace(ev.working_directory.value + "/data/temp.txt",
+                               ev.working_directory.value + "/data/borrowed.txt")
                 dprint("items_return function run successfully")
                 return True
     # ---Writing item data(txt) - End---
@@ -312,11 +330,11 @@ def main():
     ITEMS = tuple()
     dprint("Variables loaded!", "ok")
     dprint("initializing user list...")
-    if config.get("storage", "user") == "txt":
+    if Config.user == "txt":
         dprint("TXT mode")
         sub_user_list = list()
-        dprint(f"Loading {working_directory}/data/borrowers.txt")
-        for user in open(working_directory + "/data/borrowers.txt", "r"):
+        dprint(f"Loading {ev.working_directory.value}/data/borrowers.txt")
+        for user in open(ev.working_directory.value + "/data/borrowers.txt", "r"):
             if not (user.startswith("# ") or (user == "\n")):
                 sub_user_list.append(user.rstrip("\n").split(", "))
         dprint(f"No. | Username", "data")
@@ -330,13 +348,13 @@ def main():
     except NameError:
         dprint("\033[91m[WARN] An unexpected error occurred while trying to initialize the user list...")
     dprint("setting up base item list...")
-    if config.get("storage", "item") == "txt":
+    if Config.item == "txt":
         dprint("TXT mode")
         raw_items = str()
         sub_items = tuple()
         ITEMS = list()
-        dprint(f"Loading {working_directory}/data/items.txt")
-        with open(working_directory + "/data/items.txt", "r") as file:
+        dprint(f"Loading {ev.working_directory.value}/data/items.txt")
+        with open(ev.working_directory.value + "/data/items.txt", "r") as file:
             for read in file:
                 if not (read.startswith("# ") or (read == "\n")):
                     raw_items += read
@@ -355,68 +373,70 @@ def main():
     while True:
         # display inventory management system menu and ask for user input
         display()
-        input_function = ask(f"Please input your choice. (0-{len(display_function_list) - 1}, Enter to return): ",
-                             "select_function",
-                             display_function_list,
-                             "exit(0)")
+        input_function = ask().check(
+            f"Please input your choice. (0-{len(ev.function_list.value) - 1}, Enter to return): ",
+            ask.check_type.select_function.value,
+            ev.function_list.value,
+            "exit(0)")
         # When user input 0 to borrow item
-        if input_function == FUNCTION_BORROW_ITEM:
+        if input_function == ev.FUNCTION_BORROW_ITEM.value:
             # your logics for user selected borrow item function here
             print("")
             items_in_stock()
-            borrow_item = ask(f"Please input the item no. to borrow (0 - {len(ITEMS) - 1}, Enter to return): ",
-                              "borrow_item_no",
-                              "",
-                              "retry")
-            borrow_quantity = ask(f"Please input the quantity to borrow, Enter to return: ",
-                                  "borrow_quantity",
-                                  borrow_item,
-                                  "retry")
-            ask_borrow_user = ask(f"Please input borrower's name, Enter to return: ",
-                                  "username",
-                                  "",
-                                  "retry")
-            items_borrow(ask_borrow_user, borrow_item, borrow_quantity)
-            display_borrowed(ask_borrow_user)
+            borrow_item = ask().check(f"Please input the item no. to borrow (0 - {len(ITEMS) - 1}, Enter to return): ",
+                                      ask.check_type.borrow_item_no.value,
+                                      "",
+                                      "retry")
+            borrow_quantity = ask().check(f"Please input the quantity to borrow, Enter to return: ",
+                                          ask.check_type.borrow_quantity.value,
+                                          borrow_item,
+                                          "retry")
+            borrow_user = ask().check(f"Please input borrower's name, Enter to return: ",
+                                      ask.check_type.username.value,
+                                      "",
+                                      "retry")
+            if items_borrow(borrow_user, borrow_item, borrow_quantity):
+                display_borrowed(borrow_user)
+                print(f"{borrow_user} borrowed {borrow_quantity} {ITEMS[borrow_item][0]} successfully.")
 
         # When user input 1 to return item
-        elif input_function == FUNCTION_RETURN_ITEM:
+        elif input_function == ev.FUNCTION_RETURN_ITEM.value:
             # your logics for user selected return item function here
             print("")
-            borrow_user = ask(f"Please input borrower's name, Enter to return: ",
-                              "username",
-                              "",
-                              "retry")
+            borrow_user = ask().check(f"Please input borrower's name, Enter to return: ",
+                                      ask.check_type.return_username.value,
+                                      "",
+                                      "retry")
             dprint(f"calling display_borrowed\nask_borrow_user = {borrow_user}")
             display_borrowed(borrow_user)
-            borrow_item = ask(f"Please input the item no. to return Enter to return: ",
-                              "return_item_no",
-                              "",
-                              "retry")
-            borrow_quantity = ask(f"Please input the quantity to return, Enter to return: ",
-                                  "return_quantity",
-                                  (borrow_user, borrow_item),
-                                  "retry")
+            borrow_item = ask().check(f"Please input the item no. to return Enter to return: ",
+                                      ask.check_type.return_item_no.value,
+                                      borrow_user,
+                                      "retry")
+            borrow_quantity = ask().check(f"Please input the quantity to return, Enter to return: ",
+                                          ask.check_type.return_quantity.value,
+                                          (borrow_user, borrow_item),
+                                          "retry")
             dprint(f"calling items_return\n"
                    f"ask_borrow_user = {borrow_user}\n"
                    f"ask_borrow_item = {borrow_item}\n"
                    f"ask_borrow_quantity = {borrow_quantity}")
-            items_return(borrow_user, borrow_item, borrow_quantity)
-            dprint(f"calling display_borrowed\nask_borrow_user = {borrow_user}")
-            display_borrowed(borrow_user)
+            if items_return(borrow_user, borrow_item, borrow_quantity):
+                dprint(f"calling display_borrowed\nask_borrow_user = {borrow_user}")
+                display_borrowed(borrow_user)
+                print(f"{borrow_user} returned {borrow_quantity} {ITEMS[borrow_item][0]} successfully.")
 
         # When user input 2 to display a particular borrower's record
-        elif input_function == DISPLAY_USER_RECORDS:
+        elif input_function == ev.DISPLAY_USER_RECORDS.value:
             # your logics for user selected display borrower's record here
             dprint(f"calling display_borrowed with following giving username")
-            ask_borrow_user = ask(f"Please input borrower's name, Enter to return: ",
-                                  "username",
-                                  "",
-                                  "retry")
+            ask_borrow_user = ask().check(f"Please input borrower's name, Enter to return: ",
+                                          ask.check_type.username.value,
+                                          "",
+                                          "retry")
             display_borrowed(ask_borrow_user)
-
         # When user input 3 to display all records
-        elif input_function == DISPLAY_ALL_RECORDS:
+        elif input_function == ev.DISPLAY_ALL_RECORDS.value:
             # your logics for user selected display all records here
             dprint(f"calling display_borrowed")
             display_borrowed()
